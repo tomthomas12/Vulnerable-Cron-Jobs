@@ -1,0 +1,14 @@
+# Create a script that root runs every minute
+sudo bash -c 'cat > /opt/backup.sh << EOF
+#!/bin/bash
+# Backup script
+tar -czf /tmp/backup.tar.gz /var/log/*.log
+EOF'
+
+sudo chmod 755 /opt/backup.sh
+
+# Add cron job
+echo "* * * * * root /opt/backup.sh" | sudo tee /etc/cron.d/backup
+
+# Make the script writable by everyone (the vulnerability!)
+sudo chmod 777 /opt/backup.sh
